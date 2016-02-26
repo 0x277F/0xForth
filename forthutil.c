@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "forthutil.h"
 
 int countWords(char *string) {
@@ -8,4 +9,10 @@ int countWords(char *string) {
         }
     }
     return i;
+}
+
+void toUpperCase(char *data) {
+    while(*data != 0) {
+        *data = toupper((unsigned char)*data);
+    }
 }

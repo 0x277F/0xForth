@@ -1,42 +1,43 @@
 #include <stdio.h>
+#include <ctype.h>
 #include "forth.h"
 #include "forthutil.h"
-
-KHASH_MAP_INIT_STR(32, void*)
+#include "stdimpl.h"
+#include "word.h"
 
 forth_t *cpu;
+struct word_list_entry_t *list_start;
+int wordlist_len;
 
-khiter_t iter;
-
-void operate(char *statement) {
+void operate(char *op) {
+    bool word = false;
+    if(cpu->compiling > 0)
+        cpu->compiling++;
+    if(op == "0") {
+        //atoi's shitty error handling
+        stack_push(cpu->pstack, atoi(op));
+    }
+    if(atoi(op) != 0 && op != "0") {
+        word = true;
+        stack_push(cpu->pstack, atoi(op));
+    }
     cpu->phead = cpu->pstack->data[0];
     cpu->rhead = cpu->rstack->data[0];
-    int words = countWords(statement) + 1;
-    char **ops = malloc(sizeof(char*) * words);
-    for(int i = 0; i<=words; i++) {
-        ops[i] = malloc(sizeof(char) * 16);
-    }
-    int word = 0;
-    int counter = 0;
-    ops[word][0] = statement[0];
-    while(statement++) {
-        if(statement[0] != ' ') {
-            ops[word][counter] = statement[0];
-            counter++;
-        } else {
-            word++;
-            counter = 0;
+    if(word) {
+        toUpperCase(op);
+        int i = 0;
+        for(struct word_list_entry_t *entry = list_start; i <= wordlist_len; entry = entry->next, i++) {
+            if(entry->word->name == op) {
+                for(int step = 0; step <= entry->word->cmd_len; step++) {
+                    entry->word->commands[step]->word_op(cpu);
+                }
+            }
         }
-    }
-    for(int i = 0; i<words; i++) {
-        char *op = ops[i];
-
     }
 }
 
 void init_cpu() {
-    khash_t(32) *h = kh_init(32);
-
+    wordlist_len = 0;
     cpu = malloc(sizeof(forth_t));
     cpu->pstack = malloc(sizeof(stack_t));
     cpu->rstack = malloc(sizeof(stack_t));
@@ -46,6 +47,7 @@ void init_cpu() {
     cpu->rstack->tail = 0;
     cpu->phead = 0;
     cpu->rhead = 0;
+    cpu->compiling = -1;
 
     cpu->exitCallback = &stop_cpu;
     cpu->operateCallback = &operate;
@@ -59,4 +61,14 @@ void stop_cpu() {
     free(cpu->rstack);
     free(cpu);
     printf("Shutdown complete.");
+}
+
+void ndef_word(struct word_list_entry_t *word) {
+    word->next = NULL;
+    for(struct word_list_entry_t *entry = list_start; ; entry = entry->next) {
+        if(entry->next == NULL) {
+            entry->next = word;
+            break;
+        }
+    }
 }

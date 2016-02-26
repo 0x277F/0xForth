@@ -10,12 +10,12 @@ inline void word_push(forth_t *cpu) {
 
 // :
 inline void word_startword(forth_t *cpu) {
-    cpu->compiling = true;
+    cpu->compiling = 0;
 }
 
 // ;
 inline void word_endword(forth_t *cpu) {
-    cpu->compiling = false;
+    cpu->compiling = -1;
 }
 
 // .

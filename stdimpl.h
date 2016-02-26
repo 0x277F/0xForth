@@ -10,7 +10,7 @@ typedef struct {
     stack_t *rstack; //Return stack
     int rhead;
 
-    bool compiling; //Inside a word definition
+    int compiling; //Inside a word definition. Index of wherever the definition began on the stack;
     bool string; //Inside the block opened with the PRINTSTRING word (.") and closed by a " (not a separate word).
 
     //Status callbacks
